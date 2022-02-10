@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: containerd-test
+  labels:
+    app: containerd-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: containerd-test
+  template:
+    metadata:
+      labels:
+        app: containerd-test
+    spec:
+      containers:
+        - name: containerd-test
+          image: containerd-test:latest

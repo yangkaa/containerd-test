@@ -1,4 +1,4 @@
-FROM golang:1.16-alpine as go
+FROM golang:1.16 as go
 WORKDIR /workspace
 COPY go.mod go.mod
 COPY main.go main.go
