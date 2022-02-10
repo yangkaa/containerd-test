@@ -1,4 +1,4 @@
-FROM golang/golang:1.16-alpine as go
+FROM golang:1.16-alpine as go
 RUN go build main.go -o main
 
 FROM alpine:3.15
