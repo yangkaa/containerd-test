@@ -16,4 +16,4 @@ spec:
     spec:
       containers:
         - name: containerd-test
-          image: containerd-test:latest
+          image: yangk/containerd-test:latest
