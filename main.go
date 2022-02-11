@@ -9,9 +9,8 @@ import (
 func main() {
 	client, err := containerd.New("/run/containerd/containerd.sock")
 	if err != nil {
-		fmt.Println("new containerd cli failed")
+		fmt.Println("new containerd cli failed %+v", err)
 		os.Exit(1)
 	}
 	defer client.Close()
-
 }
