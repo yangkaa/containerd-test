@@ -1,16 +1,22 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"github.com/containerd/containerd"
+	"github.com/containers/podman/v3/pkg/bindings"
 	"os"
 )
-
 func main() {
-	client, err := containerd.New("/run/containerd/containerd.sock")
+	conn, err := bindings.NewConnection(context.Background(), "unix://run/user/1000/podman/podman.sock")
+	defer conn.Done()
 	if err != nil {
-		fmt.Println("new containerd cli failed %+v", err)
+		fmt.Println(err)
 		os.Exit(1)
 	}
-	defer client.Close()
+	//client, err := containerd.New("/run/containerd/containerd.sock")
+	//if err != nil {
+	//	fmt.Println("new containerd cli failed %+v", err)
+	//	os.Exit(1)
+	//}
+	//defer client.Close()
 }
