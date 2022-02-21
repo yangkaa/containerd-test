@@ -16,18 +16,22 @@ func main() {
 	}
 	defer criutil.CloseConnection(runtimeConn)
 
-	imageClient,imageConn, err := criutil.GetImageClient(&ctx)
+	imageClient, imageConn, err := criutil.GetImageClient(&ctx)
 	if err != nil {
 		logrus.Errorf("get runtime client failed %v", err)
 		return
 	}
 	defer criutil.CloseConnection(imageConn)
 
-	resp , err := imageClient.PullImage(context.Background(), &v1.PullImageRequest{
+	resp, err := imageClient.PullImage(context.Background(), &v1.PullImageRequest{
 		Image: &v1.ImageSpec{
 			Image: "nginx",
 		},
 	})
+	if err != nil {
+		logrus.Errorf("Pull Image failed %v", err)
+		return
+	}
 	logrus.Println(resp.String())
 
 	//logrus.Info("get runtime client success")
