@@ -9,19 +9,34 @@ import (
 
 func main() {
 	ctx := context.Background()
-	runtimeClient, runtimeConn, err := criutil.GetRuntimeClient(&ctx)
+	_, runtimeConn, err := criutil.GetRuntimeClient(&ctx)
 	if err != nil {
 		logrus.Errorf("get runtime client failed %v", err)
 		return
 	}
 	defer criutil.CloseConnection(runtimeConn)
-	logrus.Info("get runtime client success")
-	resp, err:=runtimeClient.ListContainers(context.Background(), &v1.ListContainersRequest{})
+
+	imageClient,imageConn, err := criutil.GetImageClient(&ctx)
 	if err != nil {
-		logrus.Errorf("List Container failed %v", err)
+		logrus.Errorf("get runtime client failed %v", err)
 		return
 	}
+	defer criutil.CloseConnection(imageConn)
+
+	resp , err := imageClient.PullImage(context.Background(), &v1.PullImageRequest{
+		Image: &v1.ImageSpec{
+			Image: "nginx",
+		},
+	})
 	logrus.Println(resp.String())
+
+	//logrus.Info("get runtime client success")
+	//resp, err:=runtimeClient.ListContainers(context.Background(), &v1.ListContainersRequest{})
+	//if err != nil {
+	//	logrus.Errorf("List Container failed %v", err)
+	//	return
+	//}
+	//logrus.Println(resp.String())
 	//conn, err := bindings.NewConnection(context.Background(), "unix://run/user/1000/podman/podman.sock")
 	//defer conn.Done()
 	//if err != nil {
