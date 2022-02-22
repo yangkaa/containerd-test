@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	pb "k8s.io/cri-api/pkg/apis/runtime/v1"
+	"k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/util"
 	"time"
 )
@@ -17,15 +17,16 @@ const (
 	maxMsgSize = 1024 * 1024 * 16
 )
 
+var RuntimeEndpoint string
 var defaultRuntimeEndpoints = []string{"unix:///var/run/dockershim.sock", "unix:///run/containerd/containerd.sock", "unix:///run/crio/crio.sock", "unix:///var/run/cri-dockerd.sock"}
 
-func GetImageClient(context *context.Context) (pb.ImageServiceClient, *grpc.ClientConn, error) {
+func GetImageClient(context *context.Context) (v1alpha2.ImageServiceClient, *grpc.ClientConn, error) {
 	// Set up a connection to the server.
 	conn, err := getImageClientConnection(context)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "connect")
 	}
-	imageClient := pb.NewImageServiceClient(conn)
+	imageClient := v1alpha2.NewImageServiceClient(conn)
 	return imageClient, conn, nil
 }
 
@@ -51,13 +52,13 @@ func getImageClientConnection(context *context.Context) (*grpc.ClientConn, error
 	//return getConnection([]string{ImageEndpoint})
 }
 
-func GetRuntimeClient(context *context.Context) (pb.RuntimeServiceClient, *grpc.ClientConn, error) {
+func GetRuntimeClient(context *context.Context) (v1alpha2.RuntimeServiceClient, *grpc.ClientConn, error) {
 	// Set up a connection to the server.
 	conn, err := getRuntimeClientConnection(context)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "connect")
 	}
-	runtimeClient := pb.NewRuntimeServiceClient(conn)
+	runtimeClient := v1alpha2.NewRuntimeServiceClient(conn)
 	return runtimeClient, conn, nil
 }
 
@@ -110,6 +111,7 @@ func getConnection(endPoints []string) (*grpc.ClientConn, error) {
 			}
 			logrus.Error(errMsg)
 		} else {
+			RuntimeEndpoint = endPoint
 			logrus.Infof("connected successfully using endpoint: %s", endPoint)
 			break
 		}
