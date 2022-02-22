@@ -1,4 +1,4 @@
-FROM golang:1.16 as go
+FROM golang:1.17 as go
 WORKDIR /workspace
 COPY . /workspace
 RUN go mod vendor && go build -o main main.go
