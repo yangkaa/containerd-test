@@ -43,7 +43,7 @@ func main() {
 	createResp, err := runtimeClient.CreateContainer(context.Background(), &v1alpha2.CreateContainerRequest{
 		Config: &v1alpha2.ContainerConfig{
 			Image: imageSpec,
-			Args:  []string{"run"},
+			Args:  []string{"run", "nginx"},
 		},
 	})
 	if err != nil {
@@ -74,7 +74,7 @@ func main() {
 	}, time.Now())
 
 	logs.ReadLogs(readLogCtx, logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
-
+	for {}
 	//logrus.Info("get runtime client success")
 	//resp, err:=runtimeClient.ListContainers(context.Background(), &v1.ListContainersRequest{})
 	//if err != nil {
