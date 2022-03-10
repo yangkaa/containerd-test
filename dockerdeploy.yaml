@@ -19,9 +19,9 @@ spec:
           image: yangk/containerd-test:latest
           imagePullPolicy: Always
           volumeMounts:
-            - mountPath: /run/containerd/containerd.sock
+            - mountPath: /var/run/dockershim.sock
               name: containerd
       volumes:
         - name: containerd
           hostPath:
-            path: /run/containerd/containerd.sock
+            path: /var/run/dockershim.sock
