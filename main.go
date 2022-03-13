@@ -40,24 +40,24 @@ func main() {
 	}
 	logrus.Println(resp.String())
 
-	createResp, err := runtimeClient.CreateContainer(context.Background(), &v1alpha2.CreateContainerRequest{
-		Config: &v1alpha2.ContainerConfig{
-			Image: imageSpec,
-			Args:  []string{"run", "nginx"},
-		},
-	})
-	if err != nil {
-		logrus.Errorf("Create Container failed %v", err)
-		return
-	}
-	logrus.Println("create container", createResp.String())
+	//createResp, err := runtimeClient.CreateContainer(context.Background(), &v1alpha2.CreateContainerRequest{
+	//	Config: &v1alpha2.ContainerConfig{
+	//		Image: imageSpec,
+	//		Args:  []string{"run", "nginx"},
+	//	},
+	//})
+	//if err != nil {
+	//	logrus.Errorf("Create Container failed %v", err)
+	//	return
+	//}
+	//logrus.Println("create container", createResp.String())
 
 	runtimeService, err := remote.NewRemoteRuntimeService(criutil.RuntimeEndpoint, time.Second*3)
 	if err != nil {
 		logrus.Errorf("New Remote Runtime Service %v", err)
 		return
 	}
-	status, err := runtimeService.ContainerStatus(createResp.GetContainerId())
+	status, err := runtimeService.ContainerStatus("8acbeb3d0c3a")
 	if err != nil {
 		logrus.Errorf("Get Container Status %v", err)
 		return
