@@ -3,12 +3,13 @@ module containerd-test
 go 1.16
 
 require (
+	github.com/containers/buildah v1.24.2
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.8.1
 	google.golang.org/grpc v1.44.0
 	k8s.io/api v0.23.4
-	k8s.io/cri-api v0.0.0
-	k8s.io/kubernetes v0.0.0-00010101000000-000000000000
+	k8s.io/cri-api v0.20.6
+	k8s.io/kubernetes v1.13.0
 )
 
 replace (

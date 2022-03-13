@@ -1,13 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"containerd-test/criutil"
 	"context"
+	"github.com/containers/buildah"
+	"github.com/containers/buildah/define"
+	"github.com/containers/storage"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
+	"github.com/containers/buildah/imagebuildah"
 	"os"
 	"time"
 )
@@ -21,6 +26,75 @@ func main() {
 	}
 	defer criutil.CloseConnection(runtimeConn)
 
+	output := &bytes.Buffer{}
+	options := define.BuildOptions{
+		ContextDirectory: os.Getenv("CONTEXT_DIR"),
+		CommonBuildOpts:  &define.CommonBuildOptions{},
+		TransientMounts:         []string{os.Getenv("TRANSIENT_MOUNT")},
+		Output:                  os.Getenv("OUTPUT"),
+		OutputFormat:            buildah.Dockerv2ImageManifest,
+		Out:                     output,
+		Err:                     output,
+		Layers:                  true,
+		NoCache:                 true,
+		RemoveIntermediateCtrs:  true,
+		ForceRmIntermediateCtrs: true,
+	}
+	storeOptions := storage.StoreOptions{}
+	store, err := storage.GetStore(storeOptions)
+	if err !=nil{
+		logrus.Errorf("Get Store failed: %+v", err)
+		os.Exit(1)
+	}
+	// build the image and gather output. log the output if the build part of the test failed
+	imageID, _, err := imagebuildah.BuildDockerfiles(ctx,store , options, os.Getenv("DOCKERFILE_NAME"))
+	if err != nil {
+		output.WriteString("\n" + err.Error())
+		os.Exit(1)
+	}
+
+	outputString := output.String()
+	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
+
+
+	//pullImage(err, ctx)
+
+	//createResp, err := runtimeClient.CreateContainer(context.Background(), &v1alpha2.CreateContainerRequest{
+	//	Config: &v1alpha2.ContainerConfig{
+	//		Image: imageSpec,
+	//		Args:  []string{"run", "nginx"},
+	//	},
+	//})
+	//if err != nil {
+	//	logrus.Errorf("Create Container failed %v", err)
+	//	return
+	//}
+	//logrus.Println("create container", createResp.String())
+
+	//getContainerStatus(err)
+
+	//logrus.Info("get runtime client success")
+	//resp, err:=runtimeClient.ListContainers(context.Background(), &v1.ListContainersRequest{})
+	//if err != nil {
+	//	logrus.Errorf("List Container failed %v", err)
+	//	return
+	//}
+	//logrus.Println(resp.String())
+	//conn, err := bindings.NewConnection(context.Background(), "unix://run/user/1000/podman/podman.sock")
+	//defer conn.Done()
+	//if err != nil {
+	//	fmt.Println(err)
+	//	os.Exit(1)
+	//}
+	//client, err := containerd.New("/run/containerd/containerd.sock")
+	//if err != nil {
+	//	fmt.Println("new containerd cli failed %+v", err)
+	//	os.Exit(1)
+	//}
+	//defer client.Close()
+}
+
+func pullImage(err error, ctx context.Context) {
 	imageClient, imageConn, err := criutil.GetImageClient(&ctx)
 	if err != nil {
 		logrus.Errorf("get runtime client failed %v", err)
@@ -39,19 +113,9 @@ func main() {
 		return
 	}
 	logrus.Println(resp.String())
+}
 
-	//createResp, err := runtimeClient.CreateContainer(context.Background(), &v1alpha2.CreateContainerRequest{
-	//	Config: &v1alpha2.ContainerConfig{
-	//		Image: imageSpec,
-	//		Args:  []string{"run", "nginx"},
-	//	},
-	//})
-	//if err != nil {
-	//	logrus.Errorf("Create Container failed %v", err)
-	//	return
-	//}
-	//logrus.Println("create container", createResp.String())
-
+func getContainerStatus(err error) {
 	runtimeService, err := remote.NewRemoteRuntimeService(criutil.RuntimeEndpoint, time.Second*3)
 	if err != nil {
 		logrus.Errorf("New Remote Runtime Service %v", err)
@@ -74,24 +138,4 @@ func main() {
 	}, time.Now())
 
 	logs.ReadLogs(readLogCtx, logPath, status.GetId(), logOptions, runtimeService, os.Stdout, os.Stderr)
-	for {}
-	//logrus.Info("get runtime client success")
-	//resp, err:=runtimeClient.ListContainers(context.Background(), &v1.ListContainersRequest{})
-	//if err != nil {
-	//	logrus.Errorf("List Container failed %v", err)
-	//	return
-	//}
-	//logrus.Println(resp.String())
-	//conn, err := bindings.NewConnection(context.Background(), "unix://run/user/1000/podman/podman.sock")
-	//defer conn.Done()
-	//if err != nil {
-	//	fmt.Println(err)
-	//	os.Exit(1)
-	//}
-	//client, err := containerd.New("/run/containerd/containerd.sock")
-	//if err != nil {
-	//	fmt.Println("new containerd cli failed %+v", err)
-	//	os.Exit(1)
-	//}
-	//defer client.Close()
 }
