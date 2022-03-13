@@ -14,7 +14,7 @@ import (
 
 func main() {
 	ctx := context.Background()
-	runtimeClient, runtimeConn, err := criutil.GetRuntimeClient(&ctx)
+	_, runtimeConn, err := criutil.GetRuntimeClient(&ctx)
 	if err != nil {
 		logrus.Errorf("get runtime client failed %v", err)
 		return
