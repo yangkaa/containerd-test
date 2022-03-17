@@ -7,6 +7,7 @@ import (
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/imagebuildah"
+	"github.com/containers/image/v5/transports/alltransports"
 	"github.com/containers/storage"
 	"github.com/containers/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
@@ -55,7 +56,7 @@ func main() {
 	}
 	logrus.Info("Get Store Success")
 	// build the image and gather output. log the output if the build part of the test failed
-	imageID, _, err := imagebuildah.BuildDockerfiles(ctx,store , options, os.Getenv("DOCKERFILE_NAME"))
+	imageID, imageName, err := imagebuildah.BuildDockerfiles(ctx,store , options, os.Getenv("DOCKERFILE_NAME"))
 	if err != nil {
 		logrus.Errorf("Build err %v", err)
 		output.WriteString("\n" + err.Error())
@@ -64,6 +65,19 @@ func main() {
 	logrus.Info("Build Success")
 	outputString := output.String()
 	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
+	dest, err := alltransports.ParseImageName(imageName.Name())
+	if err !=nil{
+		logrus.Errorf("Parse image name err %v", err)
+		os.Exit(1)
+	}
+	ref, digest, err :=buildah.Push(context.Background(), imageName.Name(), dest, buildah.PushOptions{})
+	if err !=nil{
+		logrus.Errorf("Push image name err %v", err)
+		os.Exit(1)
+	}
+	if ref != nil {
+		logrus.Infof("pushed image %q with digest %s", ref, digest.String())
+	}
 
 	//pullImage(err, ctx)
 
