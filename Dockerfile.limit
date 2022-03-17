@@ -7,7 +7,7 @@ ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
 # CMD ["/workspace/main"]
 
 FROM debian:buster
-ARG WORKDIR=/workspace
+ARG WORKDIR=/root
 ENV CONTEXT_DIR=${WORKDIR}
 ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
 ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
