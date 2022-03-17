@@ -65,16 +65,19 @@ func main() {
 	logrus.Info("Build Success")
 	outputString := output.String()
 	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
+	logrus.Infof("imageName : [%s]", imageName.Name())
 	dest, err := alltransports.ParseImageName(imageName.Name())
 	if err !=nil{
 		logrus.Errorf("Parse image name err %v", err)
 		os.Exit(1)
 	}
+	logrus.Infof("dest : [%s]", dest)
 	ref, digest, err :=buildah.Push(context.Background(), imageName.Name(), dest, buildah.PushOptions{})
 	if err !=nil{
 		logrus.Errorf("Push image name err %v", err)
 		os.Exit(1)
 	}
+	logrus.Infof("ref is %+v", ref)
 	if ref != nil {
 		logrus.Infof("pushed image %q with digest %s", ref, digest.String())
 	}
