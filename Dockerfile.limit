@@ -6,13 +6,13 @@ ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
 ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
 # CMD ["/workspace/main"]
 
-FROM debian:buster
-ARG WORKDIR=/root
-ENV CONTEXT_DIR=${WORKDIR}
-ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
-ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
-ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
-COPY --from=builder /workspace/* /root/
-RUN apt update && apt install -y libgpgmepp-dev
-#RUN chmod +x /root/main && cat /etc/apk/repositories && apk update && apk search mapp && apk add --upgrade device-mapper-libs gpgme-dev lvm2-dev device-mapper libc6-compat&& ls -l
-CMD ["/root/main"]
+#FROM debian:buster
+#ARG WORKDIR=/root
+#ENV CONTEXT_DIR=${WORKDIR}
+#ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
+#ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
+#ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
+#COPY --from=builder /workspace/* /root/
+#RUN apt update && apt install -y libgpgmepp-dev
+##RUN chmod +x /root/main && cat /etc/apk/repositories && apk update && apk search mapp && apk add --upgrade device-mapper-libs gpgme-dev lvm2-dev device-mapper libc6-compat&& ls -l
+#CMD ["/root/main"]
