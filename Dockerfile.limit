@@ -1,14 +1,18 @@
 FROM yangk/containerd-test:v0.0.1 as builder
 ARG WORKDIR=/workspace
-RUN chmod +x ${WORKDIR}/run.sh
 ENV CONTEXT_DIR=${WORKDIR}
 ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
 ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
 ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
 # CMD ["/workspace/main"]
 
-FROM goodrainapps/alpine:3.4
-WORKDIR /root
-COPY --from=builder /workspace/* .
-RUN chmod +x /root/main && pwd && ls -a
+FROM debian:buster
+ARG WORKDIR=/workspace
+ENV CONTEXT_DIR=${WORKDIR}
+ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
+ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
+ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
+COPY --from=builder /workspace/* /root/
+RUN apt update && apt install -y libgpgmepp-dev
+#RUN chmod +x /root/main && cat /etc/apk/repositories && apk update && apk search mapp && apk add --upgrade device-mapper-libs gpgme-dev lvm2-dev device-mapper libc6-compat&& ls -l
 CMD ["/root/main"]
