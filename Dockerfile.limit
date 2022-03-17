@@ -1,8 +1,14 @@
-FROM yangk/containerd-test:v0.0.1
-WORKDIR /workspace
+FROM yangk/containerd-test:v0.0.1 as builder
+ARG WORKDIR=/workspace
 RUN chmod +x ${WORKDIR}/run.sh
 ENV CONTEXT_DIR=${WORKDIR}
 ENV TRANSIENT_MOUNT=${WORKDIR}:${WORKDIR}
 ENV DOCKERFILE_NAME=${WORKDIR}/Dockerfile.test
 ENV OUTPUT=docker.io/yangk/builah-test:0.0.1
-CMD ["/workspace/main"]
+# CMD ["/workspace/main"]
+
+FROM goodrainapps/alpine:3.4
+WORKDIR /root
+COPY --from=builder /workspace/* .
+RUN chmod +x /root/main && pwd && ls -a
+CMD ["/root/main"]
