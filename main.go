@@ -6,13 +6,14 @@ import (
 	"context"
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
+	"github.com/containers/buildah/imagebuildah"
 	"github.com/containers/storage"
+	"github.com/containers/storage/pkg/unshare"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/cri-api/pkg/apis/runtime/v1alpha2"
 	"k8s.io/kubernetes/pkg/kubelet/cri/remote"
 	"k8s.io/kubernetes/pkg/kubelet/kuberuntime/logs"
-	"github.com/containers/buildah/imagebuildah"
 	"os"
 	"time"
 )
@@ -25,6 +26,11 @@ func main() {
 		return
 	}
 	defer criutil.CloseConnection(runtimeConn)
+
+	if buildah.InitReexec() {
+		return
+	}
+	unshare.MaybeReexecUsingUserNamespace(false)
 
 	output := &bytes.Buffer{}
 	options := define.BuildOptions{
@@ -42,20 +48,22 @@ func main() {
 	}
 	storeOptions := storage.StoreOptions{}
 	store, err := storage.GetStore(storeOptions)
+	logrus.Info("Get Store Start")
 	if err !=nil{
 		logrus.Errorf("Get Store failed: %+v", err)
 		os.Exit(1)
 	}
+	logrus.Info("Get Store Success")
 	// build the image and gather output. log the output if the build part of the test failed
 	imageID, _, err := imagebuildah.BuildDockerfiles(ctx,store , options, os.Getenv("DOCKERFILE_NAME"))
 	if err != nil {
+		logrus.Errorf("Build err %v", err)
 		output.WriteString("\n" + err.Error())
 		os.Exit(1)
 	}
-
+	logrus.Info("Build Success")
 	outputString := output.String()
 	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
-
 
 	//pullImage(err, ctx)
 
