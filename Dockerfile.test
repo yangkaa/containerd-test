@@ -1,2 +1,3 @@
 FROM docker.io/nginx
 COPY ./main.go .
+RUN ls -l
