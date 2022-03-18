@@ -65,8 +65,8 @@ func main() {
 	logrus.Info("Build Success")
 	outputString := output.String()
 	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
-	logrus.Infof("imageName : [%s]", imageName.Name())
-	dest, err := alltransports.ParseImageName(imageName.Name())
+	logrus.Infof("imageName : [%s] imageName.String() [%s]", imageName.Name(), imageName.String())
+	dest, err := alltransports.ParseImageName(imageName.String())
 	if err !=nil{
 		logrus.Errorf("Parse image name err %v", err)
 		os.Exit(1)
