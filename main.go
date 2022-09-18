@@ -145,7 +145,7 @@ func pullImage(err error, ctx context.Context) {
 }
 
 func getContainerStatus() {
-	runtimeService, err := remote.NewRemoteRuntimeService(criutil.RuntimeEndpoint, time.Second*3)
+	runtimeService, err := remote.NewRemoteRuntimeService("unix:///run/containerd/containerd.sock", time.Second*3)
 	if err != nil {
 		logrus.Errorf("New Remote Runtime Service %v", err)
 		return
