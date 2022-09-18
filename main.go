@@ -4,6 +4,13 @@ import (
 	"bytes"
 	"containerd-test/criutil"
 	"context"
+	"encoding/json"
+	"fmt"
+	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/events"
+	"github.com/containerd/containerd/log"
+	"github.com/containerd/containerd/namespaces"
+	"github.com/containerd/typeurl"
 	"github.com/containers/buildah"
 	"github.com/containers/buildah/define"
 	"github.com/containers/buildah/imagebuildah"
@@ -19,24 +26,85 @@ import (
 	"time"
 )
 
+const (
+	DockerContainerdSock = "/var/run/docker/containerd/containerd.sock"
+	ContainerdSock       = "/run/containerd/containerd.sock"
+)
+
 func main() {
+	client, ctx, cancel, err := newClient("default", DockerContainerdSock)
+	if err != nil {
+		logrus.Errorf("new client failed %v", err)
+		os.Exit(1)
+	}
+	defer cancel()
+	eventsClient := client.EventService()
+	eventsCh, errCh := eventsClient.Subscribe(ctx)
+	for {
+		var e *events.Envelope
+		select {
+		case e = <-eventsCh:
+		case err = <-errCh:
+			return
+		}
+		if e != nil {
+			var out []byte
+			if e.Event != nil {
+				v, err := typeurl.UnmarshalAny(e.Event)
+				if err != nil {
+					log.G(ctx).WithError(err).Warn("cannot unmarshal an event from Any")
+					continue
+				}
+				out, err = json.Marshal(v)
+				if err != nil {
+					log.G(ctx).WithError(err).Warn("cannot marshal Any into JSON")
+					continue
+				}
+			}
+			if _, err := fmt.Fprintln(
+				os.Stdout,
+				e.Timestamp,
+				e.Namespace,
+				e.Topic,
+				string(out),
+			); err != nil {
+				return
+			}
+
+		}
+	}
+}
+
+func newClient(namespace, address string, opts ...containerd.ClientOpt) (*containerd.Client, context.Context, context.CancelFunc, error) {
+	ctx := context.Background()
+	ctx = namespaces.WithNamespace(ctx, namespace)
+	client, err := containerd.New(address, opts...)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	var cancel context.CancelFunc
+	ctx, cancel = context.WithCancel(ctx)
+	return client, ctx, cancel, nil
+}
+
+func old_main() bool {
 	ctx := context.Background()
 	_, runtimeConn, err := criutil.GetRuntimeClient(&ctx)
 	if err != nil {
 		logrus.Errorf("get runtime client failed %v", err)
-		return
+		return true
 	}
 	defer criutil.CloseConnection(runtimeConn)
 
 	if buildah.InitReexec() {
-		return
+		return true
 	}
 	unshare.MaybeReexecUsingUserNamespace(false)
 
 	output := &bytes.Buffer{}
 	options := define.BuildOptions{
-		ContextDirectory: os.Getenv("CONTEXT_DIR"),
-		CommonBuildOpts:  &define.CommonBuildOptions{},
+		ContextDirectory:        os.Getenv("CONTEXT_DIR"),
+		CommonBuildOpts:         &define.CommonBuildOptions{},
 		TransientMounts:         []string{os.Getenv("TRANSIENT_MOUNT")},
 		Output:                  os.Getenv("OUTPUT"),
 		OutputFormat:            buildah.Dockerv2ImageManifest,
@@ -50,13 +118,13 @@ func main() {
 	storeOptions := storage.StoreOptions{}
 	store, err := storage.GetStore(storeOptions)
 	logrus.Info("Get Store Start")
-	if err !=nil{
+	if err != nil {
 		logrus.Errorf("Get Store failed: %+v", err)
 		os.Exit(1)
 	}
 	logrus.Info("Get Store Success")
 	// build the image and gather output. log the output if the build part of the test failed
-	imageID, imageName, err := imagebuildah.BuildDockerfiles(ctx,store , options, os.Getenv("DOCKERFILE_NAME"))
+	imageID, imageName, err := imagebuildah.BuildDockerfiles(ctx, store, options, os.Getenv("DOCKERFILE_NAME"))
 	if err != nil {
 		logrus.Errorf("Build err %v", err)
 		output.WriteString("\n" + err.Error())
@@ -65,15 +133,15 @@ func main() {
 	logrus.Info("Build Success")
 	outputString := output.String()
 	logrus.Infof("imageID [%s] \nout [%s]", imageID, outputString)
-	logrus.Infof("imageName : [%s] imageName.String() [%s]", imageName.Name(), imageName.String())
+	logrus.Infof("imageName : [%s] imageName.String() [%s]", imageName.Name(), imageName.Name())
 	dest, err := alltransports.ParseImageName(imageName.String())
-	if err !=nil{
+	if err != nil {
 		logrus.Errorf("Parse image name err %v", err)
 		os.Exit(1)
 	}
 	logrus.Infof("dest : [%s]", dest)
-	ref, digest, err :=buildah.Push(context.Background(), imageName.Name(), dest, buildah.PushOptions{})
-	if err !=nil{
+	ref, digest, err := buildah.Push(context.Background(), imageName.Name(), dest, buildah.PushOptions{})
+	if err != nil {
 		logrus.Errorf("Push image name err %v", err)
 		os.Exit(1)
 	}
@@ -117,6 +185,7 @@ func main() {
 	//	os.Exit(1)
 	//}
 	//defer client.Close()
+	return false
 }
 
 func pullImage(err error, ctx context.Context) {
